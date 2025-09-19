@@ -39,18 +39,6 @@ extern int main(int argc, char *argv[]) {
   Atom wm_delete_window = XInternAtom(display, "WM_DELETE_WINDOW", False);
   XSetWMProtocols(display, window, &wm_delete_window, 1);
 
-  // XColor color;
-  // Colormap colormap;
-
-  // // Get the default colormap
-  // colormap = DefaultColormap(display, window);
-
-  // // Allocate the color by name (e.g., "red")
-  // if (!XAllocNamedColor(display, colormap, "red", &color, &color)) {
-  //     fprintf(stderr, "Failed to allocate color\n");
-  //     return EXIT_FAILURE;
-  // }
-
   XSelectInput(display, window, ExposureMask | KeyPressMask);
   GC gc = XCreateGC(display, window, 0, NULL);
   if (gc == NULL) {
@@ -63,6 +51,21 @@ extern int main(int argc, char *argv[]) {
   int black = XBlackPixel(display, screen);
   int white = XWhitePixel(display, screen);
 
+  XColor fgColor;
+  Colormap colormap;
+
+  // Get the default colormap
+  colormap = DefaultColormap(display, screen);
+  fgColor.red = 0x3333;
+  fgColor.green = 0xaaaa;
+  fgColor.blue = 0xffff;
+
+  // Allocate the color by name (e.g., "red")
+  if (!XAllocColor(display, colormap, &fgColor)) {
+    fprintf(stderr, "Failed to allocate color\n");
+    return EXIT_FAILURE;
+  }
+
   XEvent event;
   while (!quited) {
     XNextEvent(display, &event);
@@ -74,7 +77,7 @@ extern int main(int argc, char *argv[]) {
       }
     } break;
     case Expose: {
-      XSetForeground(display, gc, black);
+      XSetForeground(display, gc, fgColor.pixel);
       XFillRectangle(display, window, gc, 20, 20, 200, 200);
       XFlush(display);
     } break;
