@@ -12,6 +12,13 @@ void on_delete(Display *display, Window window) {
   quited = true;
 }
 
+typedef struct player {
+  int32_t PosX;
+  int32_t PosY;
+  int32_t Width;
+  int32_t Height;
+} player;
+
 extern int main(int argc, char *argv[]) {
   Display *display = XOpenDisplay(NULL);
   if (NULL == display) {
@@ -35,6 +42,7 @@ extern int main(int argc, char *argv[]) {
   }
 
   XMapWindow(display, window);
+  XFlush(display);
 
   Atom wm_delete_window = XInternAtom(display, "WM_DELETE_WINDOW", False);
   XSetWMProtocols(display, window, &wm_delete_window, 1);
@@ -57,14 +65,19 @@ extern int main(int argc, char *argv[]) {
   // Get the default colormap
   colormap = DefaultColormap(display, screen);
   fgColor.red = 0x3333;
-  fgColor.green = 0xaaaa;
-  fgColor.blue = 0xffff;
+  fgColor.green = 0xcccc;
+  fgColor.blue = 0xdddd;
 
   // Allocate the color by name (e.g., "red")
   if (!XAllocColor(display, colormap, &fgColor)) {
     fprintf(stderr, "Failed to allocate color\n");
     return EXIT_FAILURE;
   }
+  player Player = {};
+  Player.PosX = 30;
+  Player.PosY = 30;
+  Player.Width = 30;
+  Player.Height = 30;
 
   XEvent event;
   while (!quited) {
@@ -76,9 +89,33 @@ extern int main(int argc, char *argv[]) {
         on_delete(event.xclient.display, event.xclient.window);
       }
     } break;
+    case KeyPress: {
+      /* exit on ESC key press */
+      KeySym keysym = XLookupKeysym((XKeyEvent *)&event, 0);
+      switch (keysym) {
+      case XK_Escape: {
+        on_delete(event.xclient.display, event.xclient.window);
+      } break;
+      case XK_Left: {
+        Player.PosX -= 10;
+      } break;
+      case XK_Right: {
+        Player.PosX += 10;
+      } break;
+      case XK_Up: {
+        Player.PosY -= 10;
+      } break;
+      case XK_Down: {
+        Player.PosY += 10;
+      } break;
+      }
+    }
     case Expose: {
+      XClearWindow(display, window);
       XSetForeground(display, gc, fgColor.pixel);
-      XFillRectangle(display, window, gc, 20, 20, 200, 200);
+      XFillRectangle(display, window, gc, Player.PosX - Player.Width / 2,
+                     Player.PosY - Player.Height / 2, Player.Width,
+                     Player.Height);
       XFlush(display);
     } break;
     }
